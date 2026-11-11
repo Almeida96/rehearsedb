@@ -12,34 +12,138 @@ final class Html {
             <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
             <meta name="color-scheme" content="light"><title>SQLite migration rehearsal | RehearseDB</title>
             <style>
-            *{box-sizing:border-box}body{margin:0;background:#f6f5ef;color:#182e2b;font:16px/1.55 system-ui,sans-serif}
-            main{max-width:60rem;margin:auto;padding:clamp(1rem,4vw,3rem)}header{border-top:4px solid #193c35;padding-top:1rem}
-            h1{font-size:clamp(2rem,5vw,3.3rem);letter-spacing:-.055em;line-height:1.08;margin:.65rem 0}h2{font-size:1.55rem;letter-spacing:-.03em}
-            section{margin:1.8rem 0;padding:1rem clamp(.8rem,3vw,1.65rem);background:#fffef9;border:1px solid #cbd3c8}
-            .badge{display:inline-block;padding:.15rem .62rem;border:1px solid #66756c;border-radius:2rem;font:650 .83rem/1.55 system-ui}
-            .fail{color:#8e2c16;background:#ffddd0}.pass{color:#144b31;background:#d5eddb}code,pre{font: .86rem/1.6 ui-monospace,monospace;overflow-wrap:anywhere;white-space:pre-wrap}
-            summary{cursor:pointer;font-weight:600}details{border-top:1px solid #c6cfc4;padding:.65rem 0}ul{padding-left:1.3rem}
-            small{color:#4d5c53}a{color:#135b46}pre{padding:.65rem;background:#f1f3ec;margin:.45rem 0}h3{margin-bottom:.45rem}
-            </style></head><body><main><header><strong>RehearseDB</strong>
-            <h1>SQLite migration rehearsal</h1>
+            :root{color-scheme:light;--ink:#18332d;--muted:#4b615a;--rule:#cbd3c9;--paper:#f6f6f0;--white:#fefefb}
+            *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 "Inter",system-ui,sans-serif}
+            main{max-width:68rem;margin:auto;padding:0 clamp(1rem,5vw,3.5rem) 3rem}
+            .mast{border-top:4px solid var(--ink);border-bottom:1px solid var(--rule);padding:1rem 0;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+            .mast strong{letter-spacing:-.055em;font-size:1.45rem}.mast span{color:var(--muted);font-size:.88rem}
+            .mast a{margin-left:auto}a{color:#1d6048;text-underline-offset:.22em;font-weight:600}
+            header{padding:clamp(1.5rem,4vw,2.8rem) 0 1.5rem}header p{margin:.6rem 0 0;font-size:1.06rem;max-width:68ch}
+            h1,h2,h3,p{overflow-wrap:anywhere}h1{font:600 clamp(2.35rem,5.2vw,3.8rem)/1.05 "STIX Two Text",Georgia,serif;letter-spacing:-.053em;margin:.8rem 0}
+            h2{font-size:1.35rem;letter-spacing:-.025em;margin:0}h3{font-size:1rem;margin:1.2rem 0 .35rem}
+            section{margin:1.25rem 0;padding:1.3rem clamp(1rem,2.6vw,1.65rem);background:var(--white);border:1px solid var(--rule);border-radius:.45rem}
+            .section-title,.context{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}.context code{color:var(--muted)}
+            .badge{display:inline-block;padding:.15rem .58rem;background:#e4e9e3;color:#344b44;border-radius:.25rem;font:700 .72rem/1.6 system-ui;letter-spacing:.06em}
+            .fail{color:#872b1d;background:#f7ded7}.pass{color:#115139;background:#dceee1}code,pre,.hash{font:.88rem/1.55 "IBM Plex Mono",Consolas,monospace;overflow-wrap:anywhere;white-space:pre-wrap}
+            header code{font-size:1em}.focus{margin:0 0 1.4rem;padding-top:1.15rem}.focus h2{font-size:1.12rem}.focus h2 code{font-size:1em}
+            table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:.9rem;font-size:.92rem}
+            th,td{padding:.55rem .45rem;text-align:left;border-top:1px solid var(--rule);overflow-wrap:anywhere}
+            thead th{color:var(--muted);font-size:.78rem}tbody th{font-weight:550}.changed{color:#8d3020;font-weight:700}
+            summary{cursor:pointer;font-weight:600}details{border-top:1px solid var(--rule);padding:.65rem 0}ul{padding-left:1.3rem}
+            small{color:var(--muted)}pre{padding:.65rem;background:#edf1eb;margin:.45rem 0}a:focus-visible,summary:focus-visible{outline:2px solid #1b674f;outline-offset:3px}
+            @media(max-width:35rem){.mast{gap:.45rem .8rem}.mast span{display:none}th,td{padding:.48rem .2rem}.hash{font-size:.74rem}}
+            </style></head><body><main><div class="mast"><strong>RehearseDB</strong><span>SQLite migration rehearsal</span><a href="report.json">JSON evidence ↗</a></div>
             """);
-        String status = report.path("status").asText();
-        out.append(badge(status)).append("<p>").append(switch (status) {
-            case "PASS" -> "The rollback restored the captured baseline and all configured checks passed.";
-            case "FORWARD_ONLY" -> "Forward checks passed. Supply a down migration to rehearse the rollback.";
-            default -> "The rehearsal found a failed check, a migration error or a difference from the baseline.";
-        }).append("</p></header>");
+        verdict(out, report);
         JsonNode baseline = report.path("baseline");
         out.append("<details><summary>Baseline and migration fingerprints</summary><pre>")
                 .append(esc(baseline.toPrettyString())).append("</pre><pre>")
                 .append(esc(report.path("inputs").toPrettyString())).append("</pre></details>");
         stage(out, report.path("stages").path("forward"), "Forward migration", "Changes from the baseline after the up script.");
         stage(out, report.path("stages").path("rollback"), "Rollback", "Differences still present after the down script.");
-        return out.append("<footer><a href=\"report.json\">Open the JSON evidence</a></footer></main></body></html>").toString();
+        return out.append("</main></body></html>").toString();
+    }
+
+    private static void verdict(StringBuilder out, JsonNode report) {
+        String status = report.path("status").asText();
+        JsonNode stages = report.path("stages");
+        boolean forwardFailed = "FAIL".equals(stages.path("forward").path("status").asText());
+        String key = forwardFailed || "FORWARD_ONLY".equals(status) ? "forward" : "rollback";
+        JsonNode stage = stages.path(key);
+        String label = key.equals("forward") ? "Forward migration" : "Rollback";
+        String file = report.path("inputs").path(key).path("file").asText();
+        JsonNode changes = stage.path("changes");
+        JsonNode first = changes.path(0);
+        boolean baselineFailed = report.at("/baseline/health/ok").isBoolean()
+                && !report.at("/baseline/health/ok").booleanValue();
+        boolean diverged = stage.path("matchesBaseline").isBoolean() && !stage.path("matchesBaseline").booleanValue();
+        boolean rowMismatch = changes.size() == 1 && first.path("before").has("dataSha256")
+                && first.path("after").has("dataSha256") && differs(first, "dataSha256")
+                && !differs(first, "schemaSha256");
+        out.append("<header><div class=\"context\">").append(badge(status));
+        if (!file.isEmpty() && !baselineFailed) out.append("<code>").append(esc(file)).append("</code>");
+        out.append("</div>");
+        switch (status) {
+            case "PASS" -> out.append("<h1>Rollback restored the baseline</h1><p>The captured objects match after the round trip. Both stages passed their configured checks.</p>");
+            case "FORWARD_ONLY" -> out.append("<h1>Forward migration passed</h1><p>Forward checks passed. Supply a down migration to rehearse the rollback.</p>");
+            default -> {
+                if (baselineFailed) {
+                    out.append("<h1>Baseline failed its integrity checks</h1><p>")
+                            .append(healthSummary(report.at("/baseline/health"))).append("</p>");
+                } else if (stage.has("error")) {
+                    out.append("<h1>").append(label).append(" failed</h1><p>").append(esc(stage.path("error").asText())).append("</p>");
+                } else if (diverged && !changes.isEmpty()) {
+                    out.append("<h1>").append(rowMismatch ? "Row contents differ after rollback" : "Rollback differs from the baseline").append("</h1><p>");
+                    if (rowMismatch && first.path("before").has("rows") && first.path("after").has("rows") && !differs(first, "rows")) {
+                        long rows = first.at("/after/rows").asLong();
+                        out.append("The <code>").append(esc(first.path("name").asText())).append("</code> table has ")
+                                .append(rows).append(rows == 1 ? " row" : " rows").append(" in both snapshots. Its row fingerprint changed.");
+                    } else {
+                        out.append("The down migration left differences in ");
+                        int visible = Math.min(3, changes.size());
+                        for (int i = 0; i < visible; i++) {
+                            if (i > 0) out.append(", ");
+                            out.append("<code>").append(esc(changes.get(i).path("name").asText())).append("</code>");
+                        }
+                        if (changes.size() > visible) out.append(" and ").append(changes.size() - visible).append(" more");
+                        out.append('.');
+                    }
+                    out.append("</p>");
+                } else {
+                    out.append("<h1>").append(label).append(" failed</h1>");
+                    if (stage.has("health") && !stage.at("/health/ok").asBoolean()) {
+                        out.append("<p>").append(healthSummary(stage.path("health"))).append("</p>");
+                    }
+                }
+                for (JsonNode check : stage.path("checks")) {
+                    if (check.path("ok").asBoolean()) continue;
+                    out.append("<p>Check <code>").append(esc(check.path("type").asText())).append("</code> failed on <code>")
+                            .append(esc(check.path("table").asText()));
+                    if (check.has("column")) out.append('.').append(esc(check.path("column").asText()));
+                    out.append("</code>.</p>");
+                }
+            }
+        }
+        out.append("</header>");
+        if (diverged && first.path("before").has("dataSha256") && first.path("after").has("dataSha256"))
+            tableComparison(out, first);
+    }
+
+    private static String healthSummary(JsonNode health) {
+        return "SQLite reported " + health.path("integrityErrors").asLong() + " integrity errors and "
+                + health.path("foreignKeyViolations").asLong() + " foreign-key violations.";
+    }
+
+    private static boolean differs(JsonNode diff, String field) {
+        return !diff.path("before").path(field).equals(diff.path("after").path(field));
+    }
+
+    private static void tableComparison(StringBuilder out, JsonNode diff) {
+        out.append("<section class=\"focus\" aria-labelledby=\"comparison\"><h2 id=\"comparison\">Table comparison · <code>")
+                .append(esc(diff.path("name").asText())).append("</code></h2><table aria-labelledby=\"comparison\">")
+                .append("<thead><tr><th scope=\"col\">Measure</th><th scope=\"col\">Baseline</th><th scope=\"col\">After rollback</th></tr></thead><tbody>");
+        for (String field : List.of("rows", "schemaSha256", "dataSha256")) {
+            JsonNode before = diff.path("before").path(field), after = diff.path("after").path(field);
+            if (before.isMissingNode() || after.isMissingNode()) continue;
+            String label = switch (field) { case "rows" -> "Row count"; case "schemaSha256" -> "Definition fingerprint"; default -> "Row fingerprint"; };
+            out.append("<tr><th scope=\"row\">").append(label).append("</th><td>").append(cell(before)).append("</td><td");
+            if (differs(diff, field)) out.append(" class=\"changed\"");
+            out.append('>').append(cell(after)).append("</td></tr>");
+        }
+        out.append("</tbody></table></section>");
+    }
+
+    private static String cell(JsonNode value) {
+        String text = value.asText();
+        if (value.isTextual() && text.length() == 64) {
+            return "<abbr class=\"hash\" title=\"" + esc(text) + "\">" + esc(text.substring(0, 12)) + "…</abbr>";
+        }
+        return esc(text);
     }
 
     private static void stage(StringBuilder out, JsonNode stage, String name, String caption) {
-        out.append("<section><h2>").append(name).append("</h2>").append(badge(stage.path("status").asText()));
+        out.append("<section><div class=\"section-title\"><h2>").append(name).append("</h2>")
+                .append(badge(stage.path("status").asText("NOT_RUN"))).append("</div>");
         for (String key : List.of("error", "reason")) {
             if (stage.has(key)) out.append("<p>").append(esc(stage.get(key).asText())).append("</p>");
         }
