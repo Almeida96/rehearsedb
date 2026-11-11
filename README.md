@@ -27,6 +27,8 @@ rehearsedb.bat demo --out shipping-demo
 
 Open `shipping-demo/lossy/report.html`. The example moves delivery instructions out of a `shipments` table. The safe rollback copies the instructions back before dropping the holding table. The lossy rollback recreates the column and drops the holding table immediately. Two of the three shipments lose their instructions.
 
+The report identifies the affected table. To see which values the example loses, read the [three input rows](examples/shipping/baseline.sql) alongside the [lossy rollback](examples/shipping/down-lossy.sql).
+
 | Result from the bundled example | Safe rollback | Lossy rollback |
 | --- | --- | --- |
 | Forward migration | PASS | PASS |
