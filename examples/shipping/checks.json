@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "forward": [
+    {"type": "row-count-unchanged", "table": "shipments"},
+    {"type": "no-nulls", "table": "shipments", "column": "destination"},
+    {"type": "unique", "table": "migration_instructions", "column": "shipment_id"}
+  ],
+  "rollback": [
+    {"type": "row-count-unchanged", "table": "shipments"}
+  ]
+}
